@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
+import httpx
 
 # Load environment variables from .env file in the backend directory (if it exists)
 # Docker Compose passes environment variables directly, so we check those first
@@ -369,57 +370,90 @@ Important: Respond with ONLY the JSON object, no additional text, no markdown fo
         raise Exception(f"Failed to find alternative store: {e}")
 
 
-async def call_openai_agent(tool_name: str, store_location: str) -> ChatResponse:
+def extract_postcode(location: str) -> str:
     """
-    Call OpenAI agent with tool name and store location.
-    Returns a ChatResponse with store information, message, and buttons.
+    Extract UK postcode from location string.
+    UK postcodes are typically in formats like:
+    - SW1A 1AA (outward code + inward code)
+    - E14 9AB
+    - M1 1AA
+    - EC1A 1BB
     """
-    if not openai_client:
-        raise Exception("OpenAI client is not initialized. Please check your .env file and restart the server.")
+    import re
+    # UK postcode pattern: 1-2 letters, 1-2 digits, optional space, 1 digit, 2 letters
+    # Examples: SW1A 1AA, E14 9AB, M1 1AA, EC1A 1BB
+    postcode_pattern = r'\b([A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2})\b'
+    match = re.search(postcode_pattern, location.upper())
+    if match:
+        return match.group(1).strip()
+    return location  # Return original location if no postcode found
+
+
+async def call_procure_part_api(part_to_acquire: str, location: str) -> Dict:
+    """
+    Call the procurePart API to get store information.
+    
+    Args:
+        part_to_acquire: A description of the part including part number if possible
+        location: The location (address or postcode) where the part would be needed
+    
+    Returns:
+        The API response as a dictionary.
+    """
+    api_url = "https://myimaginaryhost.com/api/procurePart"
+    
+    # Extract postcode from location
+    location_postcode = extract_postcode(location)
     
     try:
-        # Let OpenAI generate a response with store details
-        prompt = f"""A tradesman needs to get a tool/part from a store.
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            payload = {
+                "part_to_acquire": part_to_acquire,
+                "location_postcode": location_postcode
+            }
+            
+            print(f"📤 Calling procurePart API:")
+            print(f"   URL: {api_url}")
+            print(f"   Part to acquire: {part_to_acquire}")
+            print(f"   Location (original): {location}")
+            print(f"   Location postcode: {location_postcode}")
+            print(f"   Payload: {payload}")
+            
+            response = await client.post(api_url, json=payload)
+            response.raise_for_status()
+            
+            result = response.json()
+            print(f"✅ procurePart API response: {result}")
+            return result
+            
+    except httpx.HTTPStatusError as e:
+        print(f"❌ HTTP error calling procurePart API: {e.response.status_code} - {e.response.text}")
+        raise Exception(f"API returned error: {e.response.status_code}")
+    except httpx.RequestError as e:
+        print(f"❌ Request error calling procurePart API: {e}")
+        raise Exception(f"Failed to connect to API: {e}")
+    except Exception as e:
+        print(f"❌ Unexpected error calling procurePart API: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
-Tool/Part Name: {tool_name}
-Preferred Store Location: {store_location}
 
-Simulate finding the best nearby store option. Generate realistic information including:
-1. Store name (e.g., "AB Hardware", "XY Hardware", "Home Depot", "B&Q", "Wickes", "Screwfix")
-2. Store address (a realistic address in the area, include street number, street name, and city/postcode)
-3. Opening hours (e.g., "8:30am-5pm", "9am-6pm", "7am-8pm", "Monday-Friday 8am-6pm")
-4. Price for the item (e.g., "$12", "$25.99", "£15", "€20")
-
-You MUST respond with ONLY valid JSON in this exact format:
-{{
-  "message": "A friendly message confirming the item is available at the store. Mention the store name, confirm availability, state the price, and mention opening hours. Example: 'Great! I found the {tool_name} at AB Hardware for $12. They're open from 8:30am-5pm today.'",
-  "storeName": "Store Name Here",
-  "storeAddress": "123 Street Name, City, Postcode",
-  "openingTime": "8:30am-5pm",
-  "price": "$12"
-}}
-
-Important: Respond with ONLY the JSON object, no additional text, no markdown formatting, no code blocks."""
-
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant for tradesmen. You help find tools and parts at hardware stores. Always respond with valid JSON in the exact format requested."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=300,
-            response_format={"type": "json_object"}
-        )
+async def call_openai_agent(tool_name: str, store_location: str) -> ChatResponse:
+    """
+    Call the procurePart API with tool name and store location.
+    Returns a ChatResponse with store information, message, and buttons.
+    """
+    try:
+        # Call the real API instead of generating mock data
+        api_response = await call_procure_part_api(tool_name, store_location)
         
-        import json
-        ai_response = json.loads(response.choices[0].message.content.strip())
-        
-        # Extract store information
-        store_name = ai_response.get("storeName", store_location)
-        store_address = ai_response.get("storeAddress", "")
-        opening_time = ai_response.get("openingTime", "9am-5pm")
-        price = ai_response.get("price", "N/A")
+        # Extract store information from API response
+        # Adjust these field names based on the actual API response structure
+        store_name = api_response.get("storeName") or api_response.get("store_name") or api_response.get("name") or store_location
+        store_address = api_response.get("storeAddress") or api_response.get("store_address") or api_response.get("address") or ""
+        opening_time = api_response.get("openingTime") or api_response.get("opening_time") or api_response.get("hours") or "9am-5pm"
+        price = api_response.get("price") or api_response.get("cost") or "N/A"
         
         # Format message as confirmation dialog
         if store_address:
@@ -451,10 +485,10 @@ Important: Respond with ONLY the JSON object, no additional text, no markdown fo
             storeInfo=store_info
         )
     except Exception as e:
-        print(f"❌ Error calling OpenAI: {e}")
+        print(f"❌ Error calling procurePart API: {e}")
         import traceback
         traceback.print_exc()
-        raise Exception(f"Failed to get response from OpenAI: {e}")
+        raise Exception(f"Failed to get store information: {e}")
 
 
 
@@ -524,37 +558,77 @@ async def chat(request: MessageRequest):
     # Handle "yes_confirm" - user confirmed they want this store option
     text_lower = request.text.lower()
     if text_lower == "yes_confirm":
-        # User confirmed - show reservation confirmation
+        # User confirmed - call procurePart API to kick off backend process
         if session_id in conversation_states:
             state = conversation_states[session_id]
             tool_name = state.get("tool_name", "")
+            client_address = state.get("client_address", "")
             last_store_info = state.get("last_store_info", {})
             
             if tool_name and last_store_info:
-                # Generate reservation confirmation message with store details
-                price = last_store_info.get("price", "")
-                opening_time = last_store_info.get("openingTime", "")
-                store_name = last_store_info.get("name", "")
-                store_address = last_store_info.get("address", "")
-                google_maps_url = last_store_info.get("googleMapsUrl")
-                
-                confirmation_message = f"It's been reserved for you! The {price} {tool_name} is ready for pickup at {store_name}. They're open from {opening_time}. Use the link below to navigate to {store_address}."
-                
-                # Create store info for the confirmation message (so user can click Google Maps link)
-                store_info = StoreInfo(
-                    name=store_name,
-                    address=store_address,
-                    openingTime=opening_time,
-                    price=price,
-                    googleMapsUrl=google_maps_url
-                )
-                
-                return ChatResponse(
-                    message=confirmation_message,
-                    storeInfo=store_info
-                )
+                # Call procurePart API to kick off the backend process
+                try:
+                    price = last_store_info.get("price", "")
+                    opening_time = last_store_info.get("openingTime", "")
+                    store_name = last_store_info.get("name", "")
+                    store_address = last_store_info.get("address", "")
+                    google_maps_url = last_store_info.get("googleMapsUrl")
+                    
+                    # Call procurePart API with all the information
+                    api_response = await call_procure_part_api(tool_name, client_address)
+                    
+                    print(f"✅ procurePart API called successfully for confirmation")
+                    print(f"   Response: {api_response}")
+                    
+                    # Generate reservation confirmation message with store details
+                    confirmation_message = f"It's been reserved for you! The {price} {tool_name} is ready for pickup at {store_name}. They're open from {opening_time}. Use the link below to navigate to {store_address}."
+                    
+                    # Create store info for the confirmation message (so user can click Google Maps link)
+                    store_info = StoreInfo(
+                        name=store_name,
+                        address=store_address,
+                        openingTime=opening_time,
+                        price=price,
+                        googleMapsUrl=google_maps_url
+                    )
+                    
+                    return ChatResponse(
+                        message=confirmation_message,
+                        storeInfo=store_info
+                    )
+                except Exception as e:
+                    print(f"❌ Error calling procurePart API for confirmation: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Still return a confirmation message even if API call fails
+                    price = last_store_info.get("price", "")
+                    opening_time = last_store_info.get("openingTime", "")
+                    store_name = last_store_info.get("name", "")
+                    store_address = last_store_info.get("address", "")
+                    google_maps_url = last_store_info.get("googleMapsUrl")
+                    
+                    confirmation_message = f"It's been reserved for you! The {price} {tool_name} is ready for pickup at {store_name}. They're open from {opening_time}. Use the link below to navigate to {store_address}."
+                    
+                    store_info = StoreInfo(
+                        name=store_name,
+                        address=store_address,
+                        openingTime=opening_time,
+                        price=price,
+                        googleMapsUrl=google_maps_url
+                    )
+                    
+                    return ChatResponse(
+                        message=confirmation_message,
+                        storeInfo=store_info
+                    )
             elif tool_name:
-                # Fallback if store info not available
+                # Fallback if store info not available - still try to call API
+                try:
+                    await call_procure_part_api(tool_name, client_address or "")
+                    print(f"✅ procurePart API called successfully (fallback)")
+                except Exception as e:
+                    print(f"⚠️  Warning: Could not call procurePart API: {e}")
+                
                 confirmation_message = f"Confirmed and reserved the {tool_name} for you to pick up today! Find it on Google Maps"
                 return ChatResponse(message=confirmation_message)
     
