@@ -16,16 +16,27 @@ export interface Message {
   text: string;
   timestamp: Date;
   buttons?: Array<{ label: string; value: string }>;
+  storeInfo?: StoreInfo;
+}
+
+export interface StoreInfo {
+  name: string;
+  address: string;
+  openingTime: string;
+  price: string;
+  googleMapsUrl?: string;
 }
 
 export interface ChatResponse {
   message: string;
   buttons?: Array<{ label: string; value: string }>;
+  storeInfo?: StoreInfo;
 }
 
 export interface MessageRequest {
   text: string;
   extractedData?: ExtractedData;
   backendRequest?: BackendRequest; // Tool name and ideal store location
+  sessionId?: string; // Session ID for conversation state
 }
 

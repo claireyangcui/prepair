@@ -27,21 +27,52 @@ body {
   scroll-behavior: smooth;
 }
 
+/* WhatsApp-style wallpaper pattern with tiled background image */
+.whatsapp-wallpaper {
+  background-color: #e5ddd5;
+  position: relative;
+}
+
+.whatsapp-wallpaper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/8c98994518b575bfd8c949e91d20548b.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.05;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.whatsapp-wallpaper > * {
+  position: relative;
+  z-index: 10;
+}
+
+/* If you want to use a different image format or name, update the URL above */
+/* Example: url('/images/your-pattern.jpg') or url('/images/pattern.svg') */
+/* The image will automatically tile if it's smaller than the container */
+
 /* Custom scrollbar for chat */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgba(0, 0, 0, 0.3);
 }
 

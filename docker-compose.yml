@@ -8,8 +8,8 @@ services:
     container_name: prepair-backend
     ports:
       - "8000:8000"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    env_file:
+      - .env
     volumes:
       - ./backend:/app
     restart: unless-stopped

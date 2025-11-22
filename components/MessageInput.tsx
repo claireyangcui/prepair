@@ -31,32 +31,73 @@ export default function MessageInput({
   };
 
   return (
-    <div className="flex items-center gap-2 p-4 bg-gray-50 border-t border-gray-200">
-      <VoiceRecorder onRecordingComplete={onSendVoice} disabled={disabled} />
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder="Type a message..."
-        disabled={disabled}
-        className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-whatsapp-green focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-      />
+    <div className="bg-[#F0F2F5] px-2 py-2 flex items-end gap-1">
+      {/* Plus icon for attachments */}
       <button
-        onClick={handleSend}
-        disabled={disabled || !text.trim()}
-        className="p-2 rounded-full bg-whatsapp-green text-white hover:bg-whatsapp-darkGreen disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        title="Send message"
+        className="text-[#54656F] hover:bg-gray-300 rounded-full p-2 transition-colors flex-shrink-0"
+        title="Attach"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </button>
+      
+      {/* Input field */}
+      <div className="flex-1 flex items-end bg-white rounded-3xl px-4 py-2 min-h-[42px]">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Type a message"
+          disabled={disabled}
+          className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 placeholder-gray-500 disabled:opacity-50"
+        />
+      </div>
+
+      {/* Right side icons */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {text.trim() ? (
+          // Send button when text is entered
+          <button
+            onClick={handleSend}
+            disabled={disabled}
+            className="text-[#008069] hover:bg-gray-300 rounded-full p-2 transition-colors"
+            title="Send message"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
+          </button>
+        ) : (
+          // Attachment, camera, and microphone when no text
+          <>
+            <button
+              className="text-[#54656F] hover:bg-gray-300 rounded-full p-2 transition-colors"
+              title="Attach file"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </button>
+            <button
+              className="text-[#54656F] hover:bg-gray-300 rounded-full p-2 transition-colors"
+              title="Camera"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <VoiceRecorder onRecordingComplete={onSendVoice} disabled={disabled} />
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,12 +5,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export async function sendMessage(
   text: string,
   extractedData?: any,
-  backendRequest?: any
+  backendRequest?: any,
+  sessionId?: string
 ): Promise<ChatResponse> {
   const payload: MessageRequest = {
     text,
     extractedData,
     backendRequest,
+    sessionId,
   };
 
   try {
@@ -40,12 +42,16 @@ export async function sendMessage(
 
 export async function sendVoiceMessage(
   audioBlob: Blob,
-  extractedData?: any
+  extractedData?: any,
+  sessionId?: string
 ): Promise<ChatResponse> {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'voice-message.webm');
   if (extractedData) {
     formData.append('extracted_data', JSON.stringify(extractedData));
+  }
+  if (sessionId) {
+    formData.append('session_id', sessionId);
   }
 
   try {

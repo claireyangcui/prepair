@@ -12,6 +12,8 @@ module.exports = {
           green: '#25D366',
           darkGreen: '#128C7E',
           lightGreen: '#DCF8C6',
+          headerGreen: '#008069',
+          inputBg: '#F0F2F5',
         },
       },
     },

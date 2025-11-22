@@ -104,35 +104,37 @@ export default function VoiceRecorder({
         <button
           onClick={startRecording}
           disabled={disabled}
-          className="p-2 rounded-full bg-whatsapp-green text-white hover:bg-whatsapp-darkGreen disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="text-[#54656F] hover:bg-gray-300 rounded-full p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Record voice message"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
             <path
-              fillRule="evenodd"
-              d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-              clipRule="evenodd"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
             />
           </svg>
         </button>
       )}
 
       {isRecording && (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-2 bg-red-100 rounded-full">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-red-700 font-medium">
+        <div className="flex items-center gap-2 bg-white rounded-3xl px-4 py-2">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-gray-700 font-medium">
               {formatTime(recordingTime)}
             </span>
           </div>
           <button
             onClick={stopRecording}
-            className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            className="ml-2 text-[#54656F] hover:bg-gray-200 rounded-full p-1 transition-colors"
             title="Stop recording"
           >
             <svg
@@ -152,25 +154,25 @@ export default function VoiceRecorder({
       )}
 
       {audioURL && !isRecording && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-white rounded-3xl px-4 py-2">
           <audio src={audioURL} controls className="h-8" />
           <button
             onClick={sendRecording}
-            className="p-2 rounded-full bg-whatsapp-green text-white hover:bg-whatsapp-darkGreen transition-colors"
+            className="text-[#008069] hover:bg-gray-200 rounded-full p-1 transition-colors"
             title="Send voice message"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
               fill="currentColor"
             >
-              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>
           </button>
           <button
             onClick={cancelRecording}
-            className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            className="text-[#54656F] hover:bg-gray-200 rounded-full p-1 transition-colors"
             title="Cancel"
           >
             <svg

@@ -54,19 +54,26 @@ export function extractData(text: string): ExtractedData {
     }
   });
 
-  extracted.tools = Array.from(foundTools);
+  // Sort tools by specificity (longest/most specific first) and remove duplicates
+  const sortedTools = Array.from(foundTools).sort((a, b) => b.length - a.length);
+  extracted.tools = sortedTools;
 
   // Extract client location - look for patterns like "heading to [address]", "client at [address]"
   const clientLocationPatterns = [
-    /(?:heading to|going to|client at|at client|client location is|destination is)\s+([A-Z0-9][^,\.]+?)(?:,|\.|$)/gi,
-    /(\d+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Ln|Lane|Blvd|Boulevard|Way|Ct|Court))/gi,
+    // Pattern 1: "heading to client at [address]" or "heading to [address]"
+    /(?:heading to|going to|client at|at client|client location is|destination is|heading to client at)\s+([A-Z0-9][^,\.]+?)(?:,|\.|$)/gi,
+    // Pattern 2: Standard address format with numbers and street names
+    /(\d+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Ln|Lane|Blvd|Boulevard|Way|Ct|Court|Wall|Place|Pl|Terrace|Ter|Circle|Cir))/gi,
+    // Pattern 3: Addresses with "at" followed by address
+    /(?:at|to)\s+(\d+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Ln|Lane|Blvd|Boulevard|Way|Ct|Court|Wall|Place|Pl|Terrace|Ter|Circle|Cir))/gi,
   ];
 
   for (const pattern of clientLocationPatterns) {
     const match = text.match(pattern);
     if (match) {
-      const location = match[0]
-        .replace(/^(?:heading to|going to|client at|at client|client location is|destination is)\s+/i, '')
+      // Get the captured group if available, otherwise use the full match
+      const location = (match[1] || match[0])
+        .replace(/^(?:heading to|going to|client at|at client|client location is|destination is|heading to client at|at|to)\s+/i, '')
         .replace(/[,\.]$/, '')
         .trim();
       if (location && location.length > 5) {
