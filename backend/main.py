@@ -110,23 +110,27 @@ async def verify_user_input(user_message: str, extracted_data: Optional[Extracte
 
 User's message: "{user_message}"
 
-Extracted information:
-- Tool name: {tool_name if tool_name else "Not provided"}
-- Client address: {client_address if client_address else "Not provided"}
+Extracted information from the system:
+- Tool name extracted: {tool_name if tool_name else "Not provided"}
+- Client address extracted: {client_address if client_address else "Not provided"}
+
+IMPORTANT: A valid tool name must be a SPECIFIC tool, part, or product name (e.g., "2 port valve", "screwdriver", "hammer", "socket wrench", "pipe fitting"). 
+Generic words like "something", "item", "thing", "stuff", "it", "one", "that", "this", "what I need", "a tool", "an item" do NOT count as valid tool names.
 
 Your task:
-1. Verify if we have BOTH the tool name and client address
-2. If we have both, confirm this and say you'll help find a store
-3. If we're missing the tool name, politely ask for it
-4. If we're missing the client address, politely ask for it
-5. If we're missing both, ask for both
+1. First, analyze the user's message directly. Does it contain a SPECIFIC tool/part name? (Ignore generic placeholder words)
+2. Check if we have BOTH a valid specific tool name AND a client address
+3. If we have both valid pieces of information, confirm this and say you'll help find a store
+4. If the tool name is generic/vague (like "something", "item", etc.), politely ask: "Could you please tell me the specific tool or part name you need?"
+5. If we're missing the client address, politely ask for it
+6. If we're missing both, ask for both
 
 Keep your response friendly, concise (1-2 sentences), and professional."""
 
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant for tradesmen. You help verify that you have the necessary information (tool name and client address) before proceeding."},
+                {"role": "system", "content": "You are a helpful assistant for tradesmen. You help verify that you have the necessary information (SPECIFIC tool/part name and client address) before proceeding. You must distinguish between specific tool names (like '2 port valve', 'hammer', 'screwdriver') and generic placeholder words (like 'something', 'item', 'thing', 'stuff') which do NOT count as valid tool names."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,

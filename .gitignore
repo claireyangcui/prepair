@@ -45,3 +45,9 @@ venv/
 ENV/
 .venv
 
+# Environment files
+.env
+backend/.env
+.env.local
+.env*.local
+
